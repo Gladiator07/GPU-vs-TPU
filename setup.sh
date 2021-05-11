@@ -19,3 +19,10 @@ mkdir input/
 cd input/
 kaggle competitions download -c tpu-getting-started
 unzip tpu-getting-started.zip
+
+cd ..
+mkdir encoded_data/
+cd src/
+python3 preprocess.py
+
+cd ..
