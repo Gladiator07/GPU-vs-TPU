@@ -8,3 +8,7 @@
 [74, 67, 58, 75, 5]
 3712
 <class 'list'>
+
+
+Len of train dataset: 127533712
+Len of valid dataset: 3712

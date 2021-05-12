@@ -57,6 +57,9 @@ def tfrec_to_bytes():
         pickle.dump(val_class, f)
     with open(cfg.val_image_224_pkl, 'wb') as f:
         pickle.dump(val_images, f)
+    
+    print(len(val_ids))
+    print(len(train_ids))
 
 if __name__ == "__main__":
     tfrec_to_bytes()
