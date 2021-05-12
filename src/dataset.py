@@ -51,6 +51,7 @@ class ClassificationDataset:
         img = self.images[idx]
         img = np.array(Image.open(io.BytesIO(img)))
         img = self.aug(image = img)['image']
+        img = np.transpose(img, (2,0,1)).astype(np.float32)
         classes = int(self.classes[idx])
         # id = int(self.id[idx])
 
@@ -103,8 +104,8 @@ def display_train_image(idx, train_dataset):
     print(target)
     img = train_dataset[idx]['image']
     npimg = img.numpy()
-    # image = np.transpose(npimg, (1,2,0))
-    plt.imshow(npimg)
+    image = np.transpose(npimg, (1,2,0))
+    plt.imshow(image)
     plt.savefig(f'../plots/train_image_{target}.png')
 
 def display_valid_image(idx, valid_dataset):
@@ -115,9 +116,10 @@ def display_valid_image(idx, valid_dataset):
     target = valid_dataset[idx]['targets']
     print(target)
     img = valid_dataset[idx]['image']
+    print(img.shape)
     npimg = img.numpy()
-    # image = np.transpose(npimg, (1,2,0))
-    plt.imshow(npimg)
+    image = np.transpose(npimg, (1,2,0))
+    plt.imshow(image)
     plt.savefig(f'../plots/valid_image_{target}.png')
 
 

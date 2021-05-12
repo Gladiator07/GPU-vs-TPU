@@ -16,3 +16,9 @@ val_class_224_pkl = "../encoded_data/val_class_224.pkl"
 
 mean = [0.485, 0.456, 0.406]
 std = [0.229, 0.224, 0.225]
+
+batch_size = 16
+epochs = 25
+train_bs = 32
+val_bs = 16
+lr = 1e-4
