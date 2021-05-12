@@ -61,6 +61,37 @@ class ClassificationDataset:
         }
 
 
+class ClassificationDataLoader:
+    def __init__(self, classes, images, is_valid=False):
+        self.id = id
+        self.classes = classes
+        self.images = images
+        self.is_valid = is_valid
+
+        self.dataset = ClassificationDataLoader(
+            images=self.images,
+            targets = self.targets,
+        )
+    
+    def fetch(self, batch_size, num_workers, drop_last=False, shuffle=True, tpu=False):
+        sampler = None
+        if tpu:
+            sampler = torch.utils.data.distributed.DistributedSampler(
+                self.dataset,
+                num_replicas=xm.xrt_world_size(),
+                rank = xm.get_ordinal(),
+                shuffle=shuffle
+            )
+        data_loader = torch.utils.data.DataLoader(
+            self.dataset,
+            batch_size = batch_size,
+            sampler = sampler,
+            drop_last=drop_last,
+            num_workers = num_workers
+        )
+
+        return data_loader
+
 def display_train_image(idx, train_dataset):
     """
     Displays/saves the image
