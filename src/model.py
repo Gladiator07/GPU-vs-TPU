@@ -26,7 +26,7 @@ class Model(nn.Module):
         # return self.fc(x)
         out = self.base_model(image)
         out = self.fc(out)
-        loss = nn.BCEWithLogitsLoss()(out, targets.view(-1, 1).type_as(out))
+        loss = nn.CrossEntropyLoss()(out, targets)
         return out, loss
 
 # class Model(nn.Module):
