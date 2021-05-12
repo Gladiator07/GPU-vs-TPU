@@ -19,6 +19,6 @@ std = [0.229, 0.224, 0.225]
 
 batch_size = 16
 epochs = 25
-train_bs = 32
+train_bs = 16
 val_bs = 16
 lr = 1e-4

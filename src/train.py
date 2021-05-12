@@ -71,7 +71,7 @@ def train_model(tpu=False):
 
     for epoch in range(cfg.epochs):
         train_loss = eng.train(train_loader)
-        valid_loss = eng.evaluate(valid_loader)
+        valid_loss, final_preds = eng.evaluate(valid_loader)
         xm.master_print(f"Epoch = {epoch}, LOSS = {valid_loss}")
         scheduler.step(valid_loss)
     gc.collect()
