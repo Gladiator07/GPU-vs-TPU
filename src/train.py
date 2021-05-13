@@ -82,7 +82,6 @@ def train_model(tpu=False):
 
 
 if __name__ == "__main__":
-
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -93,7 +92,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     device = args.device
     
-
     if device == "tpu":
 
         def _mp_fn(rank, flags):
