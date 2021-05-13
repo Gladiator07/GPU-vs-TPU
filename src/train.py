@@ -79,11 +79,25 @@ def train_model(tpu=False):
 
 
 if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--device",
+        type=str
+    )
 
-    def _mp_fn(rank, flags):
-        torch.set_default_tensor_type('torch.FloatTensor')
-        a = train_model(tpu=True)
+    args = parser.parse_args()
+    device = args.device
     
-    FLAGS = {}
-    xmp.spawn(_mp_fn, args=(FLAGS,), nprocs=8, start_method='fork')
+    if device == "tpu":
+
+        def _mp_fn(rank, flags):
+            torch.set_default_tensor_type('torch.FloatTensor')
+            a = train_model(tpu=True)
+    
+        FLAGS = {}
+        xmp.spawn(_mp_fn, args=(FLAGS,), nprocs=8, start_method='fork')
     # xmp.spawn(_mp_fn, args=(FLAGS,), nprocs=8, start_method='fork')
+
+    if device == "gpu":
+        train_model(tpu=False)
