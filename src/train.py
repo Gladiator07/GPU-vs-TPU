@@ -5,6 +5,7 @@ from engine import Engine
 from model import Model
 import gc
 import torch_xla.distributed.xla_multiprocessing as xmp
+import neptune
 
 try:
     import torch_xla.core.xla_model as xm
@@ -23,6 +24,8 @@ def train_model(tpu=False):
     val_class = load_pickle_file(cfg.val_class_224_pkl)
     val_images = load_pickle_file(cfg.val_image_224_pkl)
 
+    neptune.init(project_qualified_name=cfg.neptune_project_name,
+                api_token=cfg.api_token_neptune)
     if tpu == True:
         device = xm.xla_device()
     else:
@@ -72,6 +75,8 @@ def train_model(tpu=False):
     for epoch in range(cfg.epochs):
         train_loss = eng.train(train_loader)
         valid_loss, final_preds = eng.evaluate(valid_loader)
+        neptune.log_metric(f"train_loss", train_loss)
+        neptune.log_metric(f"valid_loss", valid_loss)
         xm.master_print(f"Epoch = {epoch}, LOSS = {valid_loss}")
         scheduler.step(valid_loss)
     gc.collect()
@@ -80,15 +85,17 @@ def train_model(tpu=False):
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--device",
         type=str
     )
 
+
     args = parser.parse_args()
     device = args.device
-    
+
     if device == "tpu":
 
         def _mp_fn(rank, flags):
