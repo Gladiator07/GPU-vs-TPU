@@ -6,6 +6,7 @@ from model import Model
 import gc
 import torch_xla.distributed.xla_multiprocessing as xmp
 import neptune
+from torch.utils.tensorboard import SummaryWriter
 
 try:
     import torch_xla.core.xla_model as xm
@@ -33,6 +34,8 @@ def train_model(tpu=False):
 
     model = Model()
     model = model.to(device)
+    writer = SummaryWriter('runs/gpu_experiment_1')
+    writer.add_graph(model)
 
     train_dataset = ClassificationDataset(id=train_ids, classes = train_class, images = train_images)
     val_dataset = ClassificationDataset(id=val_ids, classes=val_class, images = val_images, is_valid=True)
