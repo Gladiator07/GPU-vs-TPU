@@ -23,5 +23,5 @@ train_bs = 16
 val_bs = 16
 lr = 1e-4
 
-eptune_project_name = "atharvaaingle/GPU-vs-TPU"
+neptune_project_name = "atharvaaingle/GPU-vs-TPU"
 api_token_neptune = "eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vdWkubmVwdHVuZS5haSIsImFwaV91cmwiOiJodHRwczovL3VpLm5lcHR1bmUuYWkiLCJhcGlfa2V5IjoiZTQ3YzY3NGUtMGU3OS00YmM4LWJhMzQtM2FkOTI1NWQ4NTc5In0="
