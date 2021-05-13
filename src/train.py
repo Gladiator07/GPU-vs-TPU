@@ -5,6 +5,7 @@ from engine import Engine
 from model import Model
 import gc
 import torch_xla.distributed.xla_multiprocessing as xmp
+from torch.utils.tensorboard import SummaryWriter
 
 try:
     import torch_xla.core.xla_model as xm
@@ -30,6 +31,8 @@ def train_model(tpu=False):
 
     model = Model()
     model = model.to(device)
+    writer = SummaryWriter('runs/gpu_experiment_1')
+    writer.add_graph(model)
 
     train_dataset = ClassificationDataset(id=train_ids, classes = train_class, images = train_images)
     val_dataset = ClassificationDataset(id=val_ids, classes=val_class, images = val_images, is_valid=True)
@@ -80,10 +83,26 @@ def train_model(tpu=False):
 
 if __name__ == "__main__":
 
-    def _mp_fn(rank, flags):
-        torch.set_default_tensor_type('torch.FloatTensor')
-        a = train_model(tpu=True)
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--device",
+        type=str
+    )
+
+    args = parser.parse_args()
+    device = args.device
     
-    FLAGS = {}
-    xmp.spawn(_mp_fn, args=(FLAGS,), nprocs=8, start_method='fork')
+
+    if device == "tpu":
+
+        def _mp_fn(rank, flags):
+            torch.set_default_tensor_type('torch.FloatTensor')
+            a = train_model(tpu=True)
+    
+        FLAGS = {}
+        xmp.spawn(_mp_fn, args=(FLAGS,), nprocs=8, start_method='fork')
     # xmp.spawn(_mp_fn, args=(FLAGS,), nprocs=8, start_method='fork')
+
+    if device == "gpu":
+        train_model(tpu=False)
