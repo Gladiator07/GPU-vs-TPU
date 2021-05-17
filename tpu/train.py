@@ -1,11 +1,13 @@
 import time
-from dataset import ClassificationDataset, load_pickle_file
 import config as cfg
 import torch
 from model import Model
 import torch.optim as optim
 import torch.nn as nn
 from torch.optim.lr_scheduler import OneCycleLR
+from torchvision import datasets
+import torch_xla.distributed.parallel_loader as pl
+import torch_xla.distributed.xla_multiprocessing as xmp
 
 try:
     import torch_xla.core.xla_model as xm
@@ -16,48 +18,41 @@ except:
 
 
 def train_model():
-    train_ids = load_pickle_file(cfg.train_ids_224_pkl)
-    train_class = load_pickle_file(cfg.train_class_224_pkl)
-    train_images = load_pickle_file(cfg.train_image_224_pkl)
+    train = datasets.ImageFolder(cfg.TRAIN_DIR, transform=cfg.train_transform)
+    valid = datasets.ImageFolder(cfg.VAL_DIR, transform=cfg.train_transform)
 
-    val_ids = load_pickle_file(cfg.val_ids_224_pkl)
-    val_class = load_pickle_file(cfg.val_class_224_pkl)
-    val_images = load_pickle_file(cfg.val_image_224_pkl)
+    train = torch.utils.data.ConcatDataset([train, valid])
     
-    train_dataset = ClassificationDataset(id=train_ids, classes = train_class, images = train_images)
-    val_dataset = ClassificationDataset(id=val_ids, classes=val_class, images = val_images, is_valid=True)
-
     torch.manual_seed(42)
-
+    
     train_sampler = torch.utils.data.distributed.DistributedSampler(
-        train_dataset,
-        num_replicas = xm.xrt_world_size(),
-        rank = xm.get_ordinal(),
-        shuffle = True
-    )
-
+        train,
+        num_replicas=xm.xrt_world_size(),
+        rank=xm.get_ordinal(),
+        shuffle=True)
+    
     train_loader = torch.utils.data.DataLoader(
-        train_dataset,
-        batch_size = cfg.train_bs,
-        sampler = train_sampler,
-        num_workers = 0,
-        drop_last = True
-    )
-
+        train,
+        batch_size=cfg.train_bs,
+        sampler=train_sampler,
+        num_workers=0,
+        drop_last=True) # print(len(train_loader))
+    
+    
     xm.master_print(f"Train for {len(train_loader)} steps per epoch")
-
+    
     # Scale learning rate to num cores
-    learning_rate = cfg.lr * xm.xrt_world_size()
+    learning_rate = 0.0001 * xm.xrt_world_size()
 
+    # Get loss function, optimizer, and model
     device = xm.xla_device()
 
-
     model = Model()
-    for param in model.base_model.parameters():  # freeze some layers
+    
+    for param in model.base_model.parameters(): # freeze some layers
         param.requires_grad = False
     
     model = model.to(device)
-
     loss_fn =  nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=5e-4)
     scheduler = OneCycleLR(optimizer, 
@@ -107,3 +102,14 @@ def train_model():
 #                 param.requires_grad = True
 
     return accuracy
+
+if __name__ == "__main__":
+    
+    # Start training processes
+    def _mp_fn(rank, flags):
+        global acc_list
+        torch.set_default_tensor_type('torch.FloatTensor')
+        a = train_model()
+
+    FLAGS={}
+    xmp.spawn(_mp_fn, args=(FLAGS,), nprocs=8, start_method='fork')

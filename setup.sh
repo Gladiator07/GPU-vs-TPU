@@ -17,16 +17,18 @@ echo "Kaggle API Key successfully linked !!!"
 cd /content/GPU-vs-TPU
 mkdir input/
 cd input/
-mkdir tfrecords/
-kaggle competitions download -c tpu-getting-started
-unzip tpu-getting-started.zip
-rm tpu-getting-started.zip
-cd ..
 mkdir jpeg/
 cd jpeg
 kaggle datasets download -d msheriey/104-flowers-garden-of-eden
 unzip 104-flowers-garden-of-eden
 rm -rf *.zip
+cd ..
+
+mkdir tfrecords/
+kaggle competitions download -c tpu-getting-started
+unzip tpu-getting-started.zip
+rm tpu-getting-started.zip
+cd ..
 
 
 cd ..
