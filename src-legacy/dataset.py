@@ -1,4 +1,3 @@
-from numpy.lib.type_check import imag
 import torch
 import numpy as np
 import io
@@ -9,16 +8,12 @@ import config as cfg
 import albumentations
 import matplotlib.pyplot as plt
 
-
 try:
     import torch_xla.core.xla_model as xm
-    
-    _xla_available = True
-except:
+    import torch_xla.distributed.parallel_loader as pl
+
+except ImportError:
     _xla_available = False
-
-ImageFile.LOAD_TRUNCATED_IMAGES = True
-
 def load_pickle_file(pickle_file_path):
     with open(pickle_file_path, 'rb') as f:
 

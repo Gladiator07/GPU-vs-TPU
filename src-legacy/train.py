@@ -5,7 +5,6 @@ from engine import Engine
 from model import Model
 import gc
 import torch_xla.distributed.xla_multiprocessing as xmp
-import neptune
 from torch.utils.tensorboard import SummaryWriter
 
 try:
@@ -25,8 +24,7 @@ def train_model(tpu=False):
     val_class = load_pickle_file(cfg.val_class_224_pkl)
     val_images = load_pickle_file(cfg.val_image_224_pkl)
 
-    neptune.init(project_qualified_name=cfg.neptune_project_name,
-                api_token=cfg.api_token_neptune)
+
     if tpu == True:
         device = xm.xla_device()
     else:
@@ -34,11 +32,11 @@ def train_model(tpu=False):
 
     model = Model()
     model = model.to(device)
-    writer = SummaryWriter('runs/gpu_experiment_1')
+    # writer = SummaryWriter('runs/gpu_experiment_1')
     # writer.add_graph(model)
 
-    train_dataset = ClassificationDataset(id=train_ids, classes = train_class, images = train_images)
-    val_dataset = ClassificationDataset(id=val_ids, classes=val_class, images = val_images, is_valid=True)
+    # train_dataset = ClassificationDataset(id=train_ids, classes = train_class, images = train_images)
+    # val_dataset = ClassificationDataset(id=val_ids, classes=val_class, images = val_images, is_valid=True)
 
     train_loader = ClassificationDataLoader(
         id = train_ids,
@@ -64,6 +62,11 @@ def train_model(tpu=False):
         tpu = tpu
     )
 
+    if tpu:
+        xm.master_print(f"Training for {len(train_loader)} steps per epoch")
+
+        # Scale learning rate to num core
+        learning_rate = 0.0001 * xm.xrt_world_size()
     optimizer = torch.optim.Adam(model.parameters(), lr=cfg.lr)
     
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
@@ -78,8 +81,8 @@ def train_model(tpu=False):
     for epoch in range(cfg.epochs):
         train_loss = eng.train(train_loader)
         valid_loss, final_preds = eng.evaluate(valid_loader)
-        neptune.log_metric(f"train_loss", train_loss)
-        neptune.log_metric(f"valid_loss", valid_loss)
+        # neptune.log_metric(f"train_loss", train_loss)
+        # neptune.log_metric(f"valid_loss", valid_loss)
         xm.master_print(f"Epoch = {epoch}, LOSS = {valid_loss}")
         scheduler.step(valid_loss)
     gc.collect()
