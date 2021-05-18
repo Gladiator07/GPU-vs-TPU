@@ -72,7 +72,7 @@ def train_model_gpu():
                 image = image.to(device)
                 target = target.to(device)
                 optimizer.zero_grad()
-                output = model(image).squeeze()
+                output = model(image)
                 train_loss = criterion(output, target)
                 train_acc = accuracy(output, target)
                 train_loss.backward()

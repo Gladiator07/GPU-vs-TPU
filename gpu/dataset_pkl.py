@@ -8,13 +8,6 @@ import config as cfg
 import albumentations
 import matplotlib.pyplot as plt
 
-try:
-    import torch_xla.core.xla_model as xm
-    import torch_xla.distributed.parallel_loader as pl
-
-except ImportError:
-    _xla_available = False
-
 
 def load_pickle_file(pickle_file_path):
     with open(pickle_file_path, "rb") as f:

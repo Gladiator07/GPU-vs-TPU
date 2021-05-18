@@ -25,8 +25,8 @@ mean = [0.485, 0.456, 0.406]
 std = [0.229, 0.224, 0.225]
 
 epochs = 25
-train_bs = 512
-valid_bs = 512
+train_bs = 256
+valid_bs = 256
 lr = 1e-4
 
 # Transforms
