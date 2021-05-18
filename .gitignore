@@ -130,3 +130,6 @@ dmypy.json
 input/
 encoded_data/
 runs/
+
+*.pt
+*.pth
