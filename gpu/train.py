@@ -5,105 +5,109 @@ import torch.optim as optim
 import torch.nn as nn
 from torch.optim.lr_scheduler import OneCycleLR
 from torchvision import datasets
+from tqdm import tqdm
 
 
-# for calculating the accuracy
-def accuracy(outputs, labels):
-    _, preds = torch.max(outputs, dim=1)
-    return torch.tensor(torch.sum(preds == labels).item() / len(preds))
+def accuracy(output, target):
+    y_pred_softmax = torch.log_softmax(output, dim=1)
+    _, preds = torch.max(y_pred_softmax, dim=1)
+    correct_pred = (preds == target).float()
+    acc = correct_pred.sum() / len(correct_pred)
+    acc = acc * 100
+    return acc
+
+
 def train_model_gpu():
 
     train_data = datasets.ImageFolder(cfg.TRAIN_DIR, transform=cfg.train_transform)
     valid_data = datasets.ImageFolder(cfg.VAL_DIR, transform=cfg.train_transform)
 
     train_loader = torch.utils.data.DataLoader(
-        train_data, 
-        batch_size = cfg.train_bs,
-        shuffle=True,
-        num_workers = 2
+        train_data, batch_size=cfg.train_bs, shuffle=True, num_workers=2
     )
 
     valid_loader = torch.utils.data.DataLoader(
-        valid_data, 
-        batch_size = cfg.valid_bs,
-        shuffle=False,
-        num_workers = 2
+        valid_data, batch_size=cfg.valid_bs, shuffle=False, num_workers=2
     )
 
     epochs = cfg.epochs
     batch_size = cfg.train_bs
     learning_rate = cfg.lr
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    
-    print("Training model on cuda...")
-    
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    print(f"Training model on {device}...")
+
     model = Model().to(device)
-    
-    for param in model.base_model.parameters(): # freeze some layers
+
+    for param in model.base_model.parameters():  # freeze some layers
         param.requires_grad = False
-    
-    criterion =  nn.CrossEntropyLoss()
+
+    criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=5e-4)
-    scheduler = OneCycleLR(optimizer, 
-                           learning_rate, 
-                           div_factor=10.0, 
-                           final_div_factor=50.0, 
-                           epochs=epochs,
-                           steps_per_epoch=len(train_loader))
-    
-    train_losses = []
-    valid_losses = []
+    scheduler = OneCycleLR(
+        optimizer,
+        learning_rate,
+        div_factor=10.0,
+        final_div_factor=50.0,
+        epochs=epochs,
+        steps_per_epoch=len(train_loader),
+    )
+
+    accuracy_stats = {"train": [], "val": []}
+
+    loss_stats = {"train": [], "val": []}
+
+    print("Starting training...")
 
     for epoch in range(1, epochs + 1):
-        train_loss = 0.0
-        valid_loss = 0.0
+
+        train_epoch_loss = 0
+        train_epoch_acc = 0
 
         model.train()
 
-        correct = 0
-        for image, target in train_loader:
-            image = image.to(device)
-            target = target.to(device)
-            optimizer.zero_grad()
-            output = model(image)
-            loss = criterion(output, target)
-            loss.backward()
-            optimizer.step()
-            scheduler.step()
-            
-            
-            train_loss += loss.item() * image.size(0)
+        with tqdm(train_loader, unit="batch") as tepoch:
+            for image, target in tepoch:
+                image = image.to(device)
+                target = target.to(device)
+                optimizer.zero_grad()
+                output = model(image).squeeze()
+                train_loss = criterion(output, target)
+                train_acc = accuracy(output, target)
+                train_loss.backward()
+                optimizer.step()
+                scheduler.step()
 
-            print(f"{torch.max(output, dim=1)}")
-            print(f"{torch.max(output, dim=1) == target}")
-            
-            correct += (torch.max(output, dim=1) == target).float().sum()
+                tepoch.set_description(f"Epoch [{epoch}/{epochs}")
+                tepoch.set_postfix(loss=train_loss.item(), accuracy=train_acc.item())
 
-        accuracy = 100 * correct / len(train_data)
+                train_epoch_loss += train_loss.item()
+                train_epoch_acc += train_acc.item()
+
         # validate model
-        model.eval()
-        for image, target in valid_loader:
-            image  = image.to(device)
-            target = target.to(device)
+        with torch.no_grad():
+            model.eval()
+            val_epoch_loss = 0
+            val_epoch_acc = 0
+            for image, target in valid_loader:
+                image = image.to(device)
+                target = target.to(device)
 
-            output = model(image)
-            loss = criterion(output, target)
+                output_val = model(image)
+                val_loss = criterion(output_val, target)
+                val_acc = accuracy(output_val, target)
 
-            # update validation loss
+                val_epoch_loss += val_loss.item()
+                val_epoch_acc += val_acc.item()
 
-            valid_loss += loss.item() * image.size(0)
-
-        # calculate average losses
-        train_loss = train_loss/len(train_loader.sampler)
-        valid_loss = valid_loss/len(valid_loader.sample)
-        train_losses.append(train_loss)
-        valid_losses.append(valid_loss)
-
-    # print-training/validation-statistics 
-        print('Epoch: {} \tTraining Loss: {:.6f} \tValidation Loss: {:.6f}\t Accuracy: {:.6f}'.format(
-        epoch, train_loss, valid_loss, accuracy))
-    
+        loss_stats["train"].append(train_epoch_loss / len(train_loader))
+        loss_stats["val"].append(val_epoch_loss / len(valid_loader))
+        accuracy_stats["train"].append(train_epoch_acc / len(train_loader))
+        accuracy_stats["val"].append(val_epoch_acc / len(valid_loader))
+        print(
+            f"Epoch {epoch+0:02}: | Train Loss: {train_epoch_loss/len(train_loader):.5f} | Val Loss: {val_epoch_loss/len(valid_loader):.5f} | Train Acc: {train_epoch_acc/len(train_loader):.3f}| Val Acc: {val_epoch_acc/len(valid_loader):.3f}"
+        )
 
 
 if __name__ == "__main__":
