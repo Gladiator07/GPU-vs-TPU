@@ -32,7 +32,6 @@ def train_model_gpu():
     )
 
     epochs = cfg.epochs
-    batch_size = cfg.train_bs
     learning_rate = cfg.lr
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -123,13 +122,16 @@ def train_model_gpu():
 
 
 if __name__ == "__main__":
-    
+    import time
+
     wandb.init(project="GPU-vs-TPU")
-    
+    start_time = time.time()
     config = wandb.config
     config.learning_rate = cfg.lr
     config.epochs = cfg.epochs
     config.train_batch_size = cfg.train_bs
     config.valid_batch_size = cfg.valid_bs
-
     train_model_gpu()
+
+    end_time = time.time() - start_time
+    wandb.log({"Time_taken": end_time})
