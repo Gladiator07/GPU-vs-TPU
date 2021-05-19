@@ -6,6 +6,7 @@ import torch.nn as nn
 from torch.optim.lr_scheduler import OneCycleLR
 from torchvision import datasets
 from tqdm import tqdm
+import wandb
 
 
 def accuracy(output, target):
@@ -43,6 +44,9 @@ def train_model_gpu():
     for param in model.base_model.parameters():  # freeze some layers
         param.requires_grad = False
 
+    # Log gradients and model params to wandb
+    wandb.watch(model)
+
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=5e-4)
     scheduler = OneCycleLR(
@@ -78,6 +82,10 @@ def train_model_gpu():
                 train_loss.backward()
                 optimizer.step()
                 scheduler.step()
+                
+                # Log to wandb
+                wandb.log({"train_loss": train_loss})
+                wandb.log({"train_accuracy": train_acc})
 
                 tepoch.set_description(f"Epoch [{epoch}/{epochs}")
                 tepoch.set_postfix(loss=train_loss.item(), accuracy=train_acc.item())
@@ -97,6 +105,10 @@ def train_model_gpu():
                 output_val = model(image)
                 val_loss = criterion(output_val, target)
                 val_acc = accuracy(output_val, target)
+                
+                # Log to wandb
+                wandb.log({"valid_loss": val_loss})
+                wandb.log({"valid_accuracy": val_acc})
 
                 val_epoch_loss += val_loss.item()
                 val_epoch_acc += val_acc.item()
@@ -111,5 +123,13 @@ def train_model_gpu():
 
 
 if __name__ == "__main__":
+    
+    wandb.init(project="GPU-vs-TPU")
+    
+    config = wandb.config
+    config.learning_rate = cfg.lr
+    config.epochs = cfg.epochs
+    config.train_batch_size = cfg.train_bs
+    config.valid_batch_size = cfg.valid_bs
 
     train_model_gpu()
