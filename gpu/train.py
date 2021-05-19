@@ -120,8 +120,8 @@ def train_model_gpu():
             f"Epoch {epoch+0:02}: | Train Loss: {train_epoch_loss/len(train_loader):.5f} | Val Loss: {val_epoch_loss/len(valid_loader):.5f} | Train Acc: {train_epoch_acc/len(train_loader):.3f}| Val Acc: {val_epoch_acc/len(valid_loader):.3f}"
         )
 
-        print("Unfreezing base model's layers...")
         if epoch == 15:
+            print("Unfreezing base model's layers...")
             for param in model.base_model.parameters():
                 param.requires_grad = True
 
