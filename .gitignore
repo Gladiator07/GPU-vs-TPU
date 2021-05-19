@@ -133,3 +133,5 @@ runs/
 
 *.pt
 *.pth
+
+config_wandb.py
