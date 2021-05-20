@@ -24,7 +24,7 @@ TEST_DIR = os.path.join(DATASET_DIR, "test")
 mean = [0.485, 0.456, 0.406]
 std = [0.229, 0.224, 0.225]
 
-epochs = 25
+epochs = 20
 train_bs = 32
 valid_bs = 32
 lr = 1e-4

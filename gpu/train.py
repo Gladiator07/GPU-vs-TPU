@@ -20,6 +20,12 @@ def accuracy(output, target):
 
 def train_model_gpu():
 
+    config = wandb.config
+    config.learning_rate = cfg.lr
+    config.epochs = cfg.epochs
+    config.train_batch_size = cfg.train_bs
+    config.valid_batch_size = cfg.valid_bs
+    
     train_data = datasets.ImageFolder(cfg.TRAIN_DIR, transform=cfg.train_transform)
     valid_data = datasets.ImageFolder(cfg.VAL_DIR, transform=cfg.train_transform)
 
@@ -40,8 +46,12 @@ def train_model_gpu():
 
     model = Model().to(device)
 
-    for param in model.base_model.parameters():  # freeze some layers
-        param.requires_grad = False
+    for param in model.parameters():  
+        param.requires_grad = True
+
+    # Add number of parameters to wandb config
+    config.total_parameters = sum(p.numel() for p in model.parameters())
+    config.total_trainable_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
 
     # Log gradients and model params to wandb
     wandb.watch(model)
@@ -120,21 +130,15 @@ def train_model_gpu():
             f"Epoch {epoch+0:02}: | Train Loss: {train_epoch_loss/len(train_loader):.5f} | Val Loss: {val_epoch_loss/len(valid_loader):.5f} | Train Acc: {train_epoch_acc/len(train_loader):.3f}| Val Acc: {val_epoch_acc/len(valid_loader):.3f}"
         )
 
-        if epoch == 15:
-            print("Unfreezing base model's layers...")
-            for param in model.base_model.parameters():
-                param.requires_grad = True
+        torch.save(model.state_dict(), "/content/GPU-vs-TPU/models/model_gpu.pt")
+
 
 if __name__ == "__main__":
     import time
 
     wandb.init(project="GPU-vs-TPU")
     start_time = time.time()
-    config = wandb.config
-    config.learning_rate = cfg.lr
-    config.epochs = cfg.epochs
-    config.train_batch_size = cfg.train_bs
-    config.valid_batch_size = cfg.valid_bs
+
     train_model_gpu()
 
     end_time = time.time() - start_time
