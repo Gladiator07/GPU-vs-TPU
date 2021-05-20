@@ -131,8 +131,8 @@ input/
 encoded_data/
 runs/
 
-*.pt
-*.pth
+# *.pt
+# *.pth
 
 config_wandb.py
 wandb/
