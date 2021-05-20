@@ -24,17 +24,17 @@ unzip 104-flowers-garden-of-eden
 rm -rf *.zip
 cd ..
 
-mkdir tfrecords/
-kaggle competitions download -c tpu-getting-started
-unzip tpu-getting-started.zip
-rm tpu-getting-started.zip
-cd ..
+# mkdir tfrecords/
+# kaggle competitions download -c tpu-getting-started
+# unzip tpu-getting-started.zip
+# rm tpu-getting-started.zip
+# cd ..
 
 
-cd ..
-mkdir encoded_data/
-cd src/
-python3 preprocess.py
+# cd ..
+# mkdir encoded_data/
+# cd src/
+# python3 preprocess.py
 
 cd ..
 
