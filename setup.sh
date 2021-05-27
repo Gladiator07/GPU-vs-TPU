@@ -24,10 +24,10 @@ unzip 104-flowers-garden-of-eden
 rm -rf *.zip
 cd ..
 
-# mkdir tfrecords/
-# kaggle competitions download -c tpu-getting-started
-# unzip tpu-getting-started.zip
-# rm tpu-getting-started.zip
+mkdir tfrecords/
+kaggle competitions download -c tpu-getting-started
+unzip tpu-getting-started.zip
+rm tpu-getting-started.zip
 # cd ..
 
 
