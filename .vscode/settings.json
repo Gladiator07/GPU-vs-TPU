@@ -1,4 +1,5 @@
 {
     "python.formatting.provider": "black",
-    "python.analysis.extraPaths": ["/content/GPU-vs-TPU/tpu"]
+    "python.analysis.extraPaths": ["/content/GPU-vs-TPU/tpu",
+                                    "/content/GPU-vs-TPU/tpu_tf"]
 }
