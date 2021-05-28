@@ -1,5 +1,7 @@
 {
     "python.formatting.provider": "black",
     "python.analysis.extraPaths": ["/content/GPU-vs-TPU/tpu",
-                                    "/content/GPU-vs-TPU/tpu_tf"]
+                                    "/content/GPU-vs-TPU/tpu_tf"
+                                ],
+                                "python.pythonPath": "/usr/bin/python3"
 }
